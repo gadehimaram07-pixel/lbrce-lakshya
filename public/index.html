@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LAKSHYA 2026 | National Level Fest - LBRCE</title>
+  <meta name="description" content="Online Event Registration Portal for LBRCE Lakshya 2026 - National Level Technical & Cultural Fest">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', var(--font-main); }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="container nav-wrapper">
+      <a href="/" class="brand-logo">
+        <div class="brand-badge">L</div>
+        <div class="brand-text">
+          <h1>LAKSHYA <span>2026</span></h1>
+          <p>LBRCE National Level Fest</p>
+        </div>
+      </a>
+
+      <nav class="nav-actions">
+        <a href="#events" class="nav-link">Events</a>
+        <button class="btn btn-outline btn-sm" id="btnOpenLookup">Find My Pass</button>
+        <a href="/admin" class="btn btn-secondary btn-sm">Admin Portal</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-pill">
+        <span class="pulse-dot"></span>
+        Registrations Now Live • March 20 - 21, 2026
+      </div>
+
+      <h2>
+        Ignite Your Innovation at <br>
+        <span class="gradient-text">LBRCE LAKSHYA 2026</span>
+      </h2>
+
+      <p class="hero-sub">
+        The premier national-level technical, coding, robotics & cultural symposium at 
+        Lakireddy Bali Reddy College of Engineering, Mylavaram. Register online to compete, learn, and win cash prizes!
+      </p>
+
+      <div class="hero-meta">
+        <div class="hero-meta-item">
+          <span>🏛️</span>
+          <span>LBRCE Autonomous Campus, AP</span>
+        </div>
+        <div class="hero-meta-item">
+          <span>⚡</span>
+          <span>9+ Flagship Events</span>
+        </div>
+        <div class="hero-meta-item">
+          <span>🏆</span>
+          <span>₹1,50,000+ Prize Pool</span>
+        </div>
+        <div class="hero-meta-item">
+          <span>📜</span>
+          <span>Official Participation Certificates</span>
+        </div>
+      </div>
+
+      <div class="hero-cta">
+        <a href="#events" class="btn btn-primary">
+          <span>Explore & Register</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+        </a>
+        <button class="btn btn-secondary" id="btnQuickLookupHero">
+          <span>Lookup Existing Pass</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Events Section -->
+  <main class="container" id="events">
+    <div class="filter-section">
+      <div class="filter-header">
+        <div>
+          <h3>Lakshya Fest Events</h3>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.2rem;">
+            Select an event to check rules, venue, seat availability, and register online.
+          </p>
+        </div>
+
+        <div class="filter-pills" id="categoryFilters">
+          <button class="filter-pill active" data-category="all">All Events</button>
+          <button class="filter-pill" data-category="Technical">Technical</button>
+          <button class="filter-pill" data-category="Coding">Coding</button>
+          <button class="filter-pill" data-category="Robotics">Robotics</button>
+          <button class="filter-pill" data-category="Cultural/Gaming">Gaming & Cultural</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Events Cards Grid -->
+    <div class="events-grid" id="eventsContainer">
+      <!-- Injected via JavaScript -->
+      <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 0; color: var(--text-secondary);">
+        <p>Loading Lakshya 2026 events...</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Registration Modal -->
+  <div class="modal-overlay" id="registrationModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title" id="regModalTitle">Event Registration</h3>
+          <p style="font-size: 0.78rem; color: var(--accent-cyan);" id="regModalSubtitle">LBRCE Lakshya 2026</p>
+        </div>
+        <button class="modal-close" id="btnCloseRegModal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Error / Warning Box -->
+        <div class="alert-box alert-danger" id="regErrorBox">
+          <span style="font-size: 1.1rem;">⚠️</span>
+          <span id="regErrorMessage"></span>
+        </div>
+
+        <form id="registrationForm" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="eventSelect">Select Lakshya Event <span class="req">*</span></label>
+            <select class="form-control" id="eventSelect" required>
+              <option value="">-- Choose an Event --</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="studentName">Full Name <span class="req">*</span></label>
+              <input type="text" class="form-control" id="studentName" placeholder="e.g. Rahul Sharma" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="rollNumber">College Roll Number / ID <span class="req">*</span></label>
+              <input type="text" class="form-control" id="rollNumber" placeholder="e.g. 22761A0501" style="text-transform: uppercase;" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="studentEmail">Email Address <span class="req">*</span></label>
+              <input type="email" class="form-control" id="studentEmail" placeholder="name@domain.com" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="studentPhone">WhatsApp / Mobile <span class="req">*</span></label>
+              <input type="tel" class="form-control" id="studentPhone" placeholder="10-digit mobile number" maxlength="10" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="collegeName">College / Institute Name <span class="req">*</span></label>
+            <input type="text" class="form-control" id="collegeName" value="Lakireddy Bali Reddy College of Engineering (LBRCE)" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="departmentSelect">Department / Branch <span class="req">*</span></label>
+              <select class="form-control" id="departmentSelect" required>
+                <option value="">-- Select Branch --</option>
+                <option value="CSE">Computer Science & Engineering (CSE)</option>
+                <option value="AI&DS">Artificial Intelligence & Data Science (AI&DS)</option>
+                <option value="IT">Information Technology (IT)</option>
+                <option value="ECE">Electronics & Communication (ECE)</option>
+                <option value="EEE">Electrical & Electronics (EEE)</option>
+                <option value="MECH">Mechanical Engineering (MECH)</option>
+                <option value="CIVIL">Civil Engineering (CIVIL)</option>
+                <option value="MBA">MBA / MCA</option>
+                <option value="OTHER">Other Discipline</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="yearSelect">Year of Study <span class="req">*</span></label>
+              <select class="form-control" id="yearSelect" required>
+                <option value="">-- Select Year --</option>
+                <option value="1st Year">1st Year</option>
+                <option value="2nd Year">2nd Year</option>
+                <option value="3rd Year">3rd Year</option>
+                <option value="4th Year">4th Year</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-top: 1.5rem; display: flex; gap: 0.85rem;">
+            <button type="submit" class="btn btn-primary" id="btnSubmitReg" style="flex: 1;">
+              <span id="btnRegText">Complete Registration</span>
+              <span id="btnRegSpinner" style="display: none;">⏳ Processing...</span>
+            </button>
+            <button type="button" class="btn btn-secondary" id="btnCancelReg">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Registration Confirmation / Ticket Pass Modal -->
+  <div class="modal-overlay" id="ticketModal">
+    <div class="modal-dialog" style="max-width: 600px;">
+      <div class="modal-header no-print">
+        <div>
+          <h3 class="modal-title" style="color: var(--accent-emerald);">🎉 Registration Confirmed!</h3>
+          <p style="font-size: 0.78rem; color: var(--text-secondary);">Save or print your event entry pass</p>
+        </div>
+        <button class="modal-close" id="btnCloseTicketModal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="ticket-wrapper" id="ticketPrintArea">
+          <div class="ticket-header">
+            <div>
+              <div class="ticket-fest-title">LAKSHYA 2026</div>
+              <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">
+                Lakireddy Bali Reddy College of Engineering
+              </div>
+            </div>
+            <div class="ticket-pass-id" id="passCodeDisplay">LAK-0000</div>
+          </div>
+
+          <div style="margin-bottom: 1.25rem;">
+            <div style="font-size: 1.2rem; font-weight: 800; color: #f8fafc;" id="passEventName">Code-A-Thon</div>
+            <div style="font-size: 0.8rem; color: #38bdf8;" id="passCategory">Technical / Coding</div>
+          </div>
+
+          <div class="ticket-grid">
+            <div class="ticket-item">
+              <span class="ticket-label">Participant Name</span>
+              <span class="ticket-val" id="passStudentName">Rahul Sharma</span>
+            </div>
+            <div class="ticket-item">
+              <span class="ticket-label">Roll Number</span>
+              <span class="ticket-val" id="passRollNumber">22761A0501</span>
+            </div>
+            <div class="ticket-item">
+              <span class="ticket-label">Department & Year</span>
+              <span class="ticket-val" id="passDeptYear">CSE • 3rd Year</span>
+            </div>
+            <div class="ticket-item">
+              <span class="ticket-label">College</span>
+              <span class="ticket-val" id="passCollege">LBRCE</span>
+            </div>
+            <div class="ticket-item">
+              <span class="ticket-label">Event Date & Time</span>
+              <span class="ticket-val" id="passDateTime">March 20, 2026 - 10:00 AM</span>
+            </div>
+            <div class="ticket-item">
+              <span class="ticket-label">Venue</span>
+              <span class="ticket-val" id="passVenue">Central Lab 1</span>
+            </div>
+          </div>
+
+          <div class="ticket-footer">
+            <div>
+              <span>Official Entry Pass</span> • 
+              <span id="passRegisteredAt">March 17, 2026</span>
+            </div>
+            <div style="font-weight: 700; color: #10b981;">VERIFIED SIGNUP</div>
+          </div>
+        </div>
+
+        <div class="no-print" style="margin-top: 1.5rem; display: flex; gap: 0.85rem;">
+          <button class="btn btn-primary" id="btnPrintTicket" style="flex: 1;">
+            🖨️ Print / Save Pass
+          </button>
+          <button class="btn btn-secondary" id="btnDoneTicket">
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Find My Pass Modal -->
+  <div class="modal-overlay" id="lookupModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">Find My Registration Pass</h3>
+          <p style="font-size: 0.78rem; color: var(--text-secondary);">Retrieve your Lakshya 2026 pass card</p>
+        </div>
+        <button class="modal-close" id="btnCloseLookupModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="alert-box alert-danger" id="lookupErrorBox">
+          <span>⚠️</span>
+          <span id="lookupErrorMessage"></span>
+        </div>
+
+        <form id="lookupForm">
+          <div class="form-group">
+            <label class="form-label" for="lookupEventSelect">Event Registered For</label>
+            <select class="form-control" id="lookupEventSelect" required>
+              <option value="">-- Select Event --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="lookupRollNumber">Roll Number / Student ID</label>
+            <input type="text" class="form-control" id="lookupRollNumber" placeholder="e.g. 22761A0501" style="text-transform: uppercase;" required>
+          </div>
+
+          <div style="margin-top: 1.5rem; display: flex; gap: 0.85rem;">
+            <button type="submit" class="btn btn-primary" id="btnSearchPass" style="flex: 1;">
+              Search Pass
+            </button>
+            <button type="button" class="btn btn-secondary" id="btnCancelLookup">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer style="border-top: 1px solid var(--border-color); padding: 3rem 0; margin-top: 3rem; background: var(--bg-secondary);">
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: gap; gap: 1.5rem;">
+      <div>
+        <div style="font-weight: 800; font-size: 1.1rem; color: var(--text-primary); margin-bottom: 0.3rem;">
+          LAKSHYA 2026 • LBRCE
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-secondary); max-width: 500px;">
+          Lakireddy Bali Reddy College of Engineering (Autonomous), Mylavaram, Krishna Dist, AP - 521230.
+          Approved by AICTE, Accredited by NAAC (A Grade) & NBA.
+        </p>
+      </div>
+      <div style="display: flex; gap: 1.5rem; align-items: center; font-size: 0.85rem;">
+        <a href="#events" class="nav-link">Events</a>
+        <a href="/admin" class="nav-link">Organizer Login</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

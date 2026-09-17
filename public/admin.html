@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LAKSHYA 2026 | Admin Console</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', var(--font-main); }
+    .auth-card {
+      max-width: 420px;
+      margin: 6rem auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border-highlight);
+      border-radius: var(--radius-xl);
+      padding: 2.5rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <header class="navbar">
+    <div class="container nav-wrapper">
+      <a href="/" class="brand-logo">
+        <div class="brand-badge">L</div>
+        <div class="brand-text">
+          <h1>LAKSHYA <span>ADMIN</span></h1>
+          <p>Organizer Console • LBRCE</p>
+        </div>
+      </a>
+
+      <div class="nav-actions">
+        <a href="/" class="nav-link">← Student Portal</a>
+        <div id="authNavControls" style="display: none; align-items: center; gap: 1rem;">
+          <span style="font-size: 0.85rem; color: var(--text-secondary);">Logged in as: <strong style="color: var(--accent-cyan);" id="adminUsernameBadge">admin</strong></span>
+          <button class="btn btn-secondary btn-sm" id="btnLogout">Sign Out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Login Section (Visible when not logged in) -->
+  <section class="container" id="loginSection">
+    <div class="auth-card">
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <div class="brand-badge" style="display: inline-block; margin-bottom: 1rem; font-size: 1.5rem; padding: 0.6rem 1rem;">🔐</div>
+        <h2 style="font-size: 1.5rem; font-weight: 800; color: #fff;">Organizer Login</h2>
+        <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 0.3rem;">
+          Enter credentials to manage registrations and export data
+        </p>
+      </div>
+
+      <div class="alert-box alert-danger" id="loginErrorBox">
+        <span>⚠️</span>
+        <span id="loginErrorMessage">Invalid credentials</span>
+      </div>
+
+      <form id="adminLoginForm">
+        <div class="form-group">
+          <label class="form-label" for="loginUsername">Admin Username</label>
+          <input type="text" class="form-control" id="loginUsername" placeholder="e.g. admin" value="admin" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="loginPassword">Password</label>
+          <input type="password" class="form-control" id="loginPassword" placeholder="••••••••" value="Lakshya@2026" required>
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+          <button type="submit" class="btn btn-primary" id="btnLoginSubmit" style="width: 100%;">
+            <span id="btnLoginText">Sign In to Dashboard</span>
+            <span id="btnLoginSpinner" style="display: none;">Authenticating...</span>
+          </button>
+        </div>
+
+        <div style="margin-top: 1.25rem; font-size: 0.76rem; color: var(--text-muted); text-align: center;">
+          Default demo credentials pre-filled for easy access.
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- Dashboard Section (Visible when authenticated) -->
+  <main class="container" id="dashboardSection" style="display: none; padding-top: 2rem; padding-bottom: 4rem;">
+
+    <!-- Metrics Cards -->
+    <div class="admin-metrics">
+      <div class="metric-card">
+        <div class="metric-label">
+          <span>Total Registrations</span>
+          <span>👥</span>
+        </div>
+        <div class="metric-val" id="metricTotalRegs">0</div>
+        <div class="metric-sub" id="metricFillRate">Overall fest submissions</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">
+          <span>Unique Students</span>
+          <span>🎓</span>
+        </div>
+        <div class="metric-val" id="metricUniqueStudents">0</div>
+        <div class="metric-sub">Across all colleges & branches</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">
+          <span>Active Events</span>
+          <span>⚡</span>
+        </div>
+        <div class="metric-val" id="metricTotalEvents">0</div>
+        <div class="metric-sub">Tech, Coding, Robotics & Gaming</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">
+          <span>Quick Actions</span>
+          <span>⚡</span>
+        </div>
+        <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+          <button class="btn btn-primary btn-sm" id="btnExportCSV" style="flex: 1;">
+            📥 Download CSV
+          </button>
+          <button class="btn btn-secondary btn-sm" id="btnRefreshStats" title="Refresh">
+            🔄
+          </button>
+        </div>
+        <div class="metric-sub">Instant export for Excel / Sheets</div>
+      </div>
+    </div>
+
+    <!-- Event Capacity Mini-Grid -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 2rem;">
+      <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 1rem;">Event Registration Progress</h4>
+      <div id="eventStatsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem;">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+
+    <!-- Search & Filter Toolbar -->
+    <div class="admin-toolbar">
+      <div class="admin-filters" style="flex-grow: 1;">
+        <input 
+          type="text" 
+          id="adminSearchInput" 
+          class="form-control" 
+          placeholder="Search name, roll number, phone, email..." 
+          style="max-width: 320px;"
+        >
+
+        <select class="form-control" id="filterEventSelect" style="max-width: 220px;">
+          <option value="all">All Events</option>
+        </select>
+
+        <select class="form-control" id="filterDeptSelect" style="max-width: 180px;">
+          <option value="all">All Departments</option>
+          <option value="CSE">CSE</option>
+          <option value="AI&DS">AI&DS</option>
+          <option value="IT">IT</option>
+          <option value="ECE">ECE</option>
+          <option value="EEE">EEE</option>
+          <option value="MECH">MECH</option>
+          <option value="CIVIL">CIVIL</option>
+          <option value="MBA">MBA / MCA</option>
+        </select>
+
+        <button class="btn btn-secondary btn-sm" id="btnResetFilters">Reset</button>
+      </div>
+
+      <div>
+        <span style="font-size: 0.85rem; color: var(--text-secondary);" id="tableCountText">Showing 0 records</span>
+      </div>
+    </div>
+
+    <!-- Registrations Table -->
+    <div class="table-responsive">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Pass ID</th>
+            <th>Event</th>
+            <th>Student Name</th>
+            <th>Roll Number</th>
+            <th>Dept & Year</th>
+            <th>Contact</th>
+            <th>College</th>
+            <th>Registered At</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="registrationsTableBody">
+          <tr>
+            <td colspan="9" style="text-align: center; padding: 3rem 0; color: var(--text-secondary);">
+              Loading registrations...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem;">
+      <span style="font-size: 0.82rem; color: var(--text-muted);" id="paginationInfo">Page 1</span>
+      <div style="display: flex; gap: 0.5rem;">
+        <button class="btn btn-secondary btn-sm" id="btnPrevPage" disabled>← Previous</button>
+        <button class="btn btn-secondary btn-sm" id="btnNextPage" disabled>Next →</button>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>
