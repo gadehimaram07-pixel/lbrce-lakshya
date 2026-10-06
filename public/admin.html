@@ -70,6 +70,13 @@
           <input type="password" class="form-control" id="loginPassword" placeholder="••••••••" value="Lakshya@2026" required>
         </div>
 
+        <div id="adminOtpGroup" style="display:none">
+          <div class="form-group">
+            <label class="form-label" for="loginOtp">Email OTP (sent to organizer mail)</label>
+            <input type="text" class="form-control otp-input-large" id="loginOtp" placeholder="6-digit OTP" maxlength="6" inputmode="numeric">
+          </div>
+        </div>
+
         <div style="margin-top: 1.5rem;">
           <button type="submit" class="btn btn-primary" id="btnLoginSubmit" style="width: 100%;">
             <span id="btnLoginText">Sign In to Dashboard</span>
@@ -78,7 +85,7 @@
         </div>
 
         <div style="margin-top: 1.25rem; font-size: 0.76rem; color: var(--text-muted); text-align: center;">
-          Default demo credentials pre-filled for easy access.
+          Password login + OTP to organizer mail when ADMIN_EMAIL is set.
         </div>
       </form>
     </div>
@@ -96,6 +103,15 @@
         </div>
         <div class="metric-val" id="metricTotalRegs">0</div>
         <div class="metric-sub" id="metricFillRate">Overall fest submissions</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">
+          <span>Revenue Collected</span>
+          <span>💰</span>
+        </div>
+        <div class="metric-val" id="metricTotalRevenue" style="color: var(--accent-emerald);">₹0</div>
+        <div class="metric-sub">From all verified registrations</div>
       </div>
 
       <div class="metric-card">
@@ -129,7 +145,7 @@
             🔄
           </button>
         </div>
-        <div class="metric-sub">Instant export for Excel / Sheets</div>
+        <div class="metric-sub">Includes UTR & payment records</div>
       </div>
     </div>
 
@@ -148,7 +164,7 @@
           type="text" 
           id="adminSearchInput" 
           class="form-control" 
-          placeholder="Search name, roll number, phone, email..." 
+          placeholder="Search name, roll, phone, email, UTR..." 
           style="max-width: 320px;"
         >
 
@@ -187,6 +203,7 @@
             <th>Roll Number</th>
             <th>Dept & Year</th>
             <th>Contact</th>
+            <th>Payment</th>
             <th>College</th>
             <th>Registered At</th>
             <th style="text-align: right;">Action</th>
@@ -194,7 +211,7 @@
         </thead>
         <tbody id="registrationsTableBody">
           <tr>
-            <td colspan="9" style="text-align: center; padding: 3rem 0; color: var(--text-secondary);">
+            <td colspan="10" style="text-align: center; padding: 3rem 0; color: var(--text-secondary);">
               Loading registrations...
             </td>
           </tr>

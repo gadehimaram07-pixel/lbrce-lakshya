@@ -9,6 +9,8 @@ const { initDB } = require('./db');
 const eventsRouter = require('./routes/events');
 const registerRouter = require('./routes/register');
 const adminRouter = require('./routes/admin');
+const authRouter = require('./routes/auth');
+const paymentsRouter = require('./routes/payments');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,10 +27,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Global Rate Limiter: 300 requests per 15 minutes
+// Global Rate Limiter (tune via env — fest WiFi NATs many students behind few IPs)
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 300,
+  max: Number(process.env.RATE_LIMIT_GENERAL_MAX) || 300,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -38,10 +40,10 @@ const generalLimiter = rateLimit({
 });
 app.use('/api/', generalLimiter);
 
-// Specific Rate Limiter for Registrations: 20 submits per 10 minutes per IP
+// Specific Rate Limiter for Registrations (tune via env for fest-day rush)
 const registrationLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
-  max: 20,
+  max: Number(process.env.RATE_LIMIT_REGISTER_MAX) || 20,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -62,6 +64,18 @@ const loginLimiter = rateLimit({
   }
 });
 
+// Specific Rate Limiter for OTP (tune via env)
+const otpLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: Number(process.env.RATE_LIMIT_OTP_MAX) || 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many OTP requests. Please wait a few minutes.'
+  }
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({
@@ -74,8 +88,18 @@ app.get('/api/health', (req, res) => {
 // API Routes
 app.use('/api/events', eventsRouter);
 app.use('/api/register', registrationLimiter, registerRouter);
+app.use('/api/auth', otpLimiter, authRouter);
+app.use('/api/payments', paymentsRouter);
 app.use('/api/admin/login', loginLimiter);
 app.use('/api/admin', adminRouter);
+
+// Login is the starting page; main portal lives at /home (guarded client-side)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+app.get('/home', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, 'public')));
@@ -93,9 +117,9 @@ app.use('/api/*', (req, res) => {
   });
 });
 
-// Fallback to index.html for unknown frontend routes
+// Fallback to login (starting page) for unknown frontend routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
 // Global error handler
@@ -112,8 +136,11 @@ initDB().then(() => {
   app.listen(PORT, () => {
     console.log(`====================================================`);
     console.log(` LBRCE Lakshya Portal Server running on port ${PORT}`);
-    console.log(` Student Portal:  http://localhost:${PORT}`);
-    console.log(` Admin Portal:    http://localhost:${PORT}/admin`);
+    console.log(` Login (start here): http://localhost:${PORT}/`);
+    console.log(` Student Portal:     http://localhost:${PORT}/home`);
+    console.log(` Admin Portal:       http://localhost:${PORT}/admin`);
+    console.log(` Razorpay payments:  ${process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET ? 'ENABLED (live keys)' : 'disabled — set RAZORPAY_KEY_ID/RAZORPAY_KEY_SECRET for live checkout'}`);
+    console.log(` Email (OTP+mails):  ${process.env.SMTP_HOST && process.env.SMTP_USER ? 'configured' : 'NOT configured — OTP login requires SMTP_HOST/SMTP_USER/SMTP_PASS'}`);
     console.log(` Default Admin:   username: "${process.env.ADMIN_USERNAME || 'admin'}", password: "${process.env.ADMIN_PASSWORD || 'Lakshya@2026'}"`);
     console.log(`====================================================`);
   });

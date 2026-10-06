@@ -18,7 +18,7 @@
   <!-- Navbar -->
   <header class="navbar">
     <div class="container nav-wrapper">
-      <a href="/" class="brand-logo">
+      <a href="/home" class="brand-logo">
         <div class="brand-badge">L</div>
         <div class="brand-text">
           <h1>LAKSHYA <span>2026</span></h1>
@@ -28,6 +28,8 @@
 
       <nav class="nav-actions">
         <a href="#events" class="nav-link">Events</a>
+        <span id="userBadge" class="user-badge" style="display:none">✓ <span id="userBadgeEmail"></span></span>
+        <button class="btn btn-outline btn-sm" id="btnOpenAuth">Login</button>
         <button class="btn btn-outline btn-sm" id="btnOpenLookup">Find My Pass</button>
         <a href="/admin" class="btn btn-secondary btn-sm">Admin Portal</a>
       </nav>
@@ -125,6 +127,19 @@
       </div>
 
       <div class="modal-body">
+        <!-- Step Wizard Indicators -->
+        <div class="reg-steps" id="regStepsIndicator">
+          <div class="reg-step-item active" id="stepIndicator1">
+            <span class="reg-step-num">1</span>
+            <span>Student Details</span>
+          </div>
+          <div class="reg-step-divider"></div>
+          <div class="reg-step-item" id="stepIndicator2">
+            <span class="reg-step-num">2</span>
+            <span>Payment & Confirmation</span>
+          </div>
+        </div>
+
         <!-- Error / Warning Box -->
         <div class="alert-box alert-danger" id="regErrorBox">
           <span style="font-size: 1.1rem;">⚠️</span>
@@ -132,75 +147,197 @@
         </div>
 
         <form id="registrationForm" novalidate>
-          <div class="form-group">
-            <label class="form-label" for="eventSelect">Select Lakshya Event <span class="req">*</span></label>
-            <select class="form-control" id="eventSelect" required>
-              <option value="">-- Choose an Event --</option>
-            </select>
-          </div>
-
-          <div class="form-row">
+          <!-- STEP 1: Student Information -->
+          <div id="regStep1">
             <div class="form-group">
-              <label class="form-label" for="studentName">Full Name <span class="req">*</span></label>
-              <input type="text" class="form-control" id="studentName" placeholder="e.g. Rahul Sharma" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="rollNumber">College Roll Number / ID <span class="req">*</span></label>
-              <input type="text" class="form-control" id="rollNumber" placeholder="e.g. 22761A0501" style="text-transform: uppercase;" required>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label" for="studentEmail">Email Address <span class="req">*</span></label>
-              <input type="email" class="form-control" id="studentEmail" placeholder="name@domain.com" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="studentPhone">WhatsApp / Mobile <span class="req">*</span></label>
-              <input type="tel" class="form-control" id="studentPhone" placeholder="10-digit mobile number" maxlength="10" required>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="collegeName">College / Institute Name <span class="req">*</span></label>
-            <input type="text" class="form-control" id="collegeName" value="Lakireddy Bali Reddy College of Engineering (LBRCE)" required>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label" for="departmentSelect">Department / Branch <span class="req">*</span></label>
-              <select class="form-control" id="departmentSelect" required>
-                <option value="">-- Select Branch --</option>
-                <option value="CSE">Computer Science & Engineering (CSE)</option>
-                <option value="AI&DS">Artificial Intelligence & Data Science (AI&DS)</option>
-                <option value="IT">Information Technology (IT)</option>
-                <option value="ECE">Electronics & Communication (ECE)</option>
-                <option value="EEE">Electrical & Electronics (EEE)</option>
-                <option value="MECH">Mechanical Engineering (MECH)</option>
-                <option value="CIVIL">Civil Engineering (CIVIL)</option>
-                <option value="MBA">MBA / MCA</option>
-                <option value="OTHER">Other Discipline</option>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                <label class="form-label" for="eventSelect" style="margin-bottom: 0;">Select Lakshya Event <span class="req">*</span></label>
+                <span id="eventFeeBadge" class="badge badge-tech" style="display: none; font-size: 0.72rem;">Fee: ₹100</span>
+              </div>
+              <select class="form-control" id="eventSelect" required>
+                <option value="">-- Choose an Event --</option>
               </select>
             </div>
 
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="studentName">Full Name <span class="req">*</span></label>
+                <input type="text" class="form-control" id="studentName" placeholder="e.g. Rahul Sharma" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="rollNumber">College Roll Number / ID <span class="req">*</span></label>
+                <input type="text" class="form-control" id="rollNumber" placeholder="e.g. 22761A0501" style="text-transform: uppercase;" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="studentEmail">Email Address <span class="req">*</span></label>
+                <input type="email" class="form-control" id="studentEmail" placeholder="name@domain.com" required>
+                <div class="otp-verify-row">
+                  <span id="emailVerifiedBadge" class="verify-badge unverified">⚪ Email not verified</span>
+                  <button type="button" class="btn btn-outline btn-sm" id="btnSendRegOtp">Send OTP</button>
+                </div>
+                <div id="regOtpBox" class="otp-box" style="display:none">
+                  <input type="text" class="form-control otp-input" id="regOtpInput" placeholder="Enter 6-digit OTP" maxlength="6" inputmode="numeric">
+                  <button type="button" class="btn btn-primary btn-sm" id="btnVerifyRegOtp">Verify</button>
+                </div>
+                <div id="regOtpHint" class="otp-hint">Verify your email to receive pass + entry token by mail.</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="studentPhone">WhatsApp / Mobile <span class="req">*</span></label>
+                <input type="tel" class="form-control" id="studentPhone" placeholder="10-digit mobile number" maxlength="10" required>
+              </div>
+            </div>
+
             <div class="form-group">
-              <label class="form-label" for="yearSelect">Year of Study <span class="req">*</span></label>
-              <select class="form-control" id="yearSelect" required>
-                <option value="">-- Select Year --</option>
-                <option value="1st Year">1st Year</option>
-                <option value="2nd Year">2nd Year</option>
-                <option value="3rd Year">3rd Year</option>
-                <option value="4th Year">4th Year</option>
-              </select>
+              <label class="form-label" for="collegeName">College / Institute Name <span class="req">*</span></label>
+              <input type="text" class="form-control" id="collegeName" value="Lakireddy Bali Reddy College of Engineering (LBRCE)" required>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="departmentSelect">Department / Branch <span class="req">*</span></label>
+                <select class="form-control" id="departmentSelect" required>
+                  <option value="">-- Select Branch --</option>
+                  <option value="CSE">Computer Science & Engineering (CSE)</option>
+                  <option value="AI&DS">Artificial Intelligence & Data Science (AI&DS)</option>
+                  <option value="IT">Information Technology (IT)</option>
+                  <option value="ECE">Electronics & Communication (ECE)</option>
+                  <option value="EEE">Electrical & Electronics (EEE)</option>
+                  <option value="MECH">Mechanical Engineering (MECH)</option>
+                  <option value="CIVIL">Civil Engineering (CIVIL)</option>
+                  <option value="MBA">MBA / MCA</option>
+                  <option value="OTHER">Other Discipline</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="yearSelect">Year of Study <span class="req">*</span></label>
+                <select class="form-control" id="yearSelect" required>
+                  <option value="">-- Select Year --</option>
+                  <option value="1st Year">1st Year</option>
+                  <option value="2nd Year">2nd Year</option>
+                  <option value="3rd Year">3rd Year</option>
+                  <option value="4th Year">4th Year</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="margin-top: 1.5rem; display: flex; gap: 0.85rem;">
+              <button type="button" class="btn btn-primary" id="btnGoToPayment" style="flex: 1;">
+                <span>Proceed to Payment</span>
+                <span>→</span>
+              </button>
+              <button type="button" class="btn btn-secondary" id="btnCancelReg">Cancel</button>
             </div>
           </div>
 
-          <div style="margin-top: 1.5rem; display: flex; gap: 0.85rem;">
-            <button type="submit" class="btn btn-primary" id="btnSubmitReg" style="flex: 1;">
-              <span id="btnRegText">Complete Registration</span>
-              <span id="btnRegSpinner" style="display: none;">⏳ Processing...</span>
-            </button>
-            <button type="button" class="btn btn-secondary" id="btnCancelReg">Cancel</button>
+          <!-- STEP 1b: Team section (shown when event allows teams) -->
+          <div id="teamSection" style="display:none; margin-top: 0.5rem;">
+            <div class="team-section-card">
+              <div class="team-section-head">
+                <div>
+                  <div style="font-weight:800">👥 Team Entry</div>
+                  <div id="teamSizeHint" style="font-size:.76rem;color:var(--text-secondary)">Up to 4 members</div>
+                </div>
+                <button type="button" class="btn btn-outline btn-sm" id="btnAddMember">+ Add Member</button>
+              </div>
+              <div class="form-group" style="margin-bottom:.8rem">
+                <label class="form-label" for="teamName">Team / Squad Name</label>
+                <input type="text" class="form-control" id="teamName" placeholder="e.g. Night Owls" maxlength="80">
+              </div>
+              <div id="teamMembersWrap"></div>
+            </div>
+            <div style="margin-top: 1.5rem; display: flex; gap: 0.85rem;">
+              <button type="button" class="btn btn-primary" id="btnGoToPayment2" style="flex: 1;">
+                <span>Proceed to Payment</span>
+                <span>→</span>
+              </button>
+              <button type="button" class="btn btn-secondary" id="btnCancelReg2">Cancel</button>
+            </div>
+          </div>
+
+          <!-- STEP 2: Payment & Checkout Section -->
+          <div id="regStep2" style="display: none;">
+            <!-- Order / Fee Summary Card -->
+            <div class="payment-summary-card">
+              <div class="payment-summary-header">
+                <div>
+                  <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em;">Selected Lakshya Event</div>
+                  <div class="payment-event-name" id="paySummaryEventName">Code-A-Thon</div>
+                  <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.15rem;" id="paySummaryMeta">March 20, 2026 • Central Lab</div>
+                </div>
+                <div class="payment-amount-pill" id="paySummaryAmount">
+                  ₹100
+                </div>
+              </div>
+              <div style="font-size: 0.76rem; color: var(--text-secondary); border-top: 1px dashed var(--border-color); padding-top: 0.5rem; display: flex; justify-content: space-between;">
+                <span>Student: <strong id="paySummaryStudent" style="color: #fff;">Rahul Sharma</strong></span>
+                <span>Roll: <strong id="paySummaryRoll" style="color: var(--accent-cyan);">22761A0501</strong></span>
+              </div>
+              <div id="paySummaryTeam" style="display:none;font-size: 0.76rem; color: var(--text-secondary); margin-top: 0.3rem;">
+                Team: <strong id="paySummaryTeamName" style="color:#fbbf24;"></strong>
+                <span id="paySummaryTeamSize" style="color:var(--accent-emerald);"></span>
+              </div>
+            </div>
+
+            <!-- Online payment only (Razorpay live, or simulation when keys absent) -->
+            <div id="panelInstant" class="instant-gateway-panel">
+              <div class="gateway-badge">
+                <span>🛡️</span>
+                <span id="gatewayBadgeText">Secure Online Checkout</span>
+              </div>
+              <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 1rem;" id="gatewayDescText">
+                Pay by UPI, card, netbanking or wallet through Razorpay. Verified instantly.
+              </p>
+
+              <div id="razorpayBox">
+                <button type="button" class="btn btn-primary" id="btnRazorpayPay" style="width: 100%; margin-top: 0.5rem; justify-content: center;">
+                  💳 Pay <span id="razorpayPayAmount">₹100</span> Securely via Razorpay
+                </button>
+                <div style="font-size:.74rem;color:var(--text-muted);text-align:center;margin-top:.5rem">
+                  UPI • Cards • Netbanking • Wallets
+                </div>
+              </div>
+
+              <div id="simulateBox" style="display:none">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Payment Mode</label>
+                    <select class="form-control" id="instantModeSelect">
+                      <option value="CARD">Debit / Credit Card</option>
+                      <option value="NETBANKING">Net Banking (SBI / HDFC / ICICI)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Payment Gateway Status</label>
+                    <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.65rem 0.85rem; font-size: 0.85rem; color: #fbbf24; font-weight: 600;">
+                      ⚠ Live gateway not configured — demo mode
+                    </div>
+                  </div>
+                </div>
+
+                <button type="button" class="btn btn-primary" id="btnSimulateInstantPay" style="width: 100%; margin-top: 0.5rem; justify-content: center;">
+                  💳 Pay <span id="instantPayBtnAmount">₹100</span> Now & Authorize
+                </button>
+              </div>
+
+              <div id="instantPaySuccessNotice" style="display: none; margin-top: 0.85rem; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: 0.6rem 0.85rem; font-size: 0.82rem; color: #34d399;">
+                ✓ Payment Authorized! Transaction Ref: <strong id="instantTxnIdDisplay" style="font-family: monospace;">TXN-123456</strong>
+              </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div style="margin-top: 1.5rem; display: flex; gap: 0.85rem;">
+              <button type="button" class="btn btn-secondary" id="btnBackToStep1">
+                ← Back
+              </button>
+              <button type="submit" class="btn btn-primary" id="btnSubmitReg" style="flex: 1;">
+                <span id="btnRegText">Verify Payment & Confirm Pass</span>
+                <span id="btnRegSpinner" style="display: none;">⏳ Verifying Payment...</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -235,6 +372,25 @@
             <div style="font-size: 0.8rem; color: #38bdf8;" id="passCategory">Technical / Coding</div>
           </div>
 
+          <!-- Verified Payment Strip -->
+          <div class="ticket-payment-strip">
+            <div class="ticket-payment-details">
+              <div class="ticket-payment-item">
+                <span class="ticket-payment-label">Fee Paid</span>
+                <span class="ticket-payment-val" id="passAmountPaid">₹100</span>
+              </div>
+              <div class="ticket-payment-item">
+                <span class="ticket-payment-label">Payment Mode</span>
+                <span class="ticket-payment-val" id="passPaymentMethod" style="color: #60a5fa;">UPI</span>
+              </div>
+              <div class="ticket-payment-item">
+                <span class="ticket-payment-label">Transaction / UTR ID</span>
+                <span class="ticket-payment-val" id="passTransactionId">UTR-408192837461</span>
+              </div>
+            </div>
+            <div class="ticket-verified-stamp">✓ VERIFIED PAYMENT</div>
+          </div>
+
           <div class="ticket-grid">
             <div class="ticket-item">
               <span class="ticket-label">Participant Name</span>
@@ -245,12 +401,25 @@
               <span class="ticket-val" id="passRollNumber">22761A0501</span>
             </div>
             <div class="ticket-item">
+              <span class="ticket-label">Entry Token (mailed)</span>
+              <span class="ticket-val" id="passEntryToken" style="font-family:monospace;color:#fbbf24">LAK-TKN-XXXXXXXX</span>
+            </div>
+            <div class="ticket-item ticket-qr-item">
+              <span class="ticket-label">Entry QR (scan at gate)</span>
+              <img id="passEntryQr" class="ticket-qr-img" src="" alt="Entry Token QR" style="display:none" />
+            </div>
+            <div class="ticket-item">
               <span class="ticket-label">Department & Year</span>
               <span class="ticket-val" id="passDeptYear">CSE • 3rd Year</span>
             </div>
             <div class="ticket-item">
               <span class="ticket-label">College</span>
               <span class="ticket-val" id="passCollege">LBRCE</span>
+            </div>
+            <div class="ticket-item" id="passTeamBlock" style="display:none">
+              <span class="ticket-label">Team & Members</span>
+              <span class="ticket-val" id="passTeamName">Night Owls</span>
+              <span id="passTeamMembers" class="ticket-team-list"></span>
             </div>
             <div class="ticket-item">
               <span class="ticket-label">Event Date & Time</span>
@@ -267,13 +436,17 @@
               <span>Official Entry Pass</span> • 
               <span id="passRegisteredAt">March 17, 2026</span>
             </div>
-            <div style="font-weight: 700; color: #10b981;">VERIFIED SIGNUP</div>
+            <div style="font-weight: 700; color: #10b981;">ADMISSION CONFIRMED</div>
           </div>
+          <div id="passMailNotice" class="mail-notice">📧 Pass + entry token sent to your email.</div>
         </div>
 
-        <div class="no-print" style="margin-top: 1.5rem; display: flex; gap: 0.85rem;">
+        <div class="no-print" style="margin-top: 1.5rem; display: flex; gap: 0.85rem; flex-wrap: wrap;">
           <button class="btn btn-primary" id="btnPrintTicket" style="flex: 1;">
             🖨️ Print / Save Pass
+          </button>
+          <button class="btn btn-outline btn-sm" id="btnResendPass" title="Re-mail pass + token">
+            📧 Resend Email
           </button>
           <button class="btn btn-secondary" id="btnDoneTicket">
             Done
@@ -321,6 +494,43 @@
       </div>
     </div>
   </div>
+
+  <!-- Login / Email OTP Modal -->
+  <div class="modal-overlay" id="authModal">
+    <div class="modal-dialog" style="max-width:460px">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">Login with Email OTP</h3>
+          <p style="font-size:0.78rem;color:var(--text-secondary)">OTP is sent to your mail for secure login</p>
+        </div>
+        <button class="modal-close" id="btnCloseAuthModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="alert-box alert-danger" id="authErrorBox"><span>⚠️</span><span id="authErrorMessage"></span></div>
+        <div class="alert-box alert-success" id="authSuccessBox"><span>✓</span><span id="authSuccessMessage"></span></div>
+        <div id="authStepEmail">
+          <div class="form-group">
+            <label class="form-label" for="authEmail">Email Address</label>
+            <input type="email" class="form-control" id="authEmail" placeholder="you@college.edu">
+          </div>
+          <button class="btn btn-primary" id="btnRequestAuthOtp" style="width:100%;justify-content:center">Send OTP to Mail</button>
+        </div>
+        <div id="authStepOtp" style="display:none">
+          <div class="form-group">
+            <label class="form-label" for="authOtpInput">Enter 6-digit OTP (check mail / spam)</label>
+            <input type="text" class="form-control otp-input-large" id="authOtpInput" placeholder="••••••" maxlength="6" inputmode="numeric">
+          </div>
+          <div style="display:flex;gap:.6rem">
+            <button class="btn btn-secondary" id="btnBackAuthEmail">← Back</button>
+            <button class="btn btn-primary" id="btnVerifyAuthOtp" style="flex:1;justify-content:center">Verify & Login</button>
+          </div>
+          <button class="btn btn-outline btn-sm" id="btnResendAuthOtp" style="margin-top:.7rem;width:100%">Resend OTP</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastWrap" class="toast-wrap"></div>
 
   <!-- Footer -->
   <footer style="border-top: 1px solid var(--border-color); padding: 3rem 0; margin-top: 3rem; background: var(--bg-secondary);">

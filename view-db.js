@@ -17,8 +17,11 @@ async function inspectDB() {
         r.id as pass_id, 
         r.roll_number, 
         r.name, 
-        r.department, 
         e.name as event_name, 
+        r.amount_paid,
+        r.payment_method as mode,
+        r.transaction_id,
+        r.payment_status as status,
         r.created_at
       FROM registrations r
       JOIN events e ON r.event_id = e.id

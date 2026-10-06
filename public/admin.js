@@ -19,6 +19,7 @@ const btnLoginSpinner = document.getElementById('btnLoginSpinner');
 const btnLogout = document.getElementById('btnLogout');
 
 const metricTotalRegs = document.getElementById('metricTotalRegs');
+const metricTotalRevenue = document.getElementById('metricTotalRevenue');
 const metricUniqueStudents = document.getElementById('metricUniqueStudents');
 const metricTotalEvents = document.getElementById('metricTotalEvents');
 const eventStatsGrid = document.getElementById('eventStatsGrid');
@@ -116,7 +117,8 @@ function showDashboardView() {
   loadRegistrations();
 }
 
-// Handle Admin Login
+// Handle Admin Login (password + optional emailed OTP second factor)
+let pendingOtpUser = null;
 async function handleLogin(e) {
   e.preventDefault();
   loginErrorBox.style.display = 'none';
@@ -127,6 +129,48 @@ async function handleLogin(e) {
   if (!username || !password) {
     loginErrorBox.style.display = 'flex';
     loginErrorMessage.innerText = 'Please enter both username and password.';
+    return;
+  }
+
+  // If OTP step is visible, verify OTP instead
+  const otpGroup = document.getElementById('adminOtpGroup');
+  const otpVisible = otpGroup && otpGroup.style.display !== 'none';
+  if (otpVisible || pendingOtpUser) {
+    const otp = document.getElementById('loginOtp')?.value.trim();
+    if (!otp) {
+      loginErrorBox.style.display = 'flex';
+      loginErrorMessage.innerText = 'Enter the OTP sent to the organizer mail.';
+      return;
+    }
+    btnLoginSubmit.disabled = true;
+    btnLoginText.style.display = 'none';
+    btnLoginSpinner.style.display = 'inline';
+    try {
+      const res = await fetch('/api/admin/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: pendingOtpUser || username, otp })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        authToken = data.token;
+        localStorage.setItem('lakshya_admin_token', authToken);
+        localStorage.setItem('lakshya_admin_user', data.username);
+        pendingOtpUser = null;
+        if (otpGroup) otpGroup.style.display = 'none';
+        showDashboardView();
+      } else {
+        loginErrorBox.style.display = 'flex';
+        loginErrorMessage.innerText = data.message || 'OTP verification failed.';
+      }
+    } catch (err) {
+      loginErrorBox.style.display = 'flex';
+      loginErrorMessage.innerText = 'Network error. Please try again.';
+    } finally {
+      btnLoginSubmit.disabled = false;
+      btnLoginText.style.display = 'inline';
+      btnLoginSpinner.style.display = 'none';
+    }
     return;
   }
 
@@ -144,6 +188,14 @@ async function handleLogin(e) {
     const data = await res.json();
 
     if (res.ok && data.success) {
+      if (data.otpRequired) {
+        pendingOtpUser = username;
+        if (otpGroup) otpGroup.style.display = 'block';
+        btnLoginText.innerText = 'Verify OTP & Sign In';
+        showLoginMsg('ok', data.message);
+        document.getElementById('loginOtp')?.focus();
+        return;
+      }
       authToken = data.token;
       localStorage.setItem('lakshya_admin_token', authToken);
       localStorage.setItem('lakshya_admin_user', data.username);
@@ -153,14 +205,24 @@ async function handleLogin(e) {
       loginErrorMessage.innerText = data.message || 'Authentication failed.';
     }
   } catch (err) {
-    console.error('Login error:', err);
     loginErrorBox.style.display = 'flex';
     loginErrorMessage.innerText = 'Network error. Please try again.';
   } finally {
     btnLoginSubmit.disabled = false;
     btnLoginText.style.display = 'inline';
     btnLoginSpinner.style.display = 'none';
+    if (!pendingOtpUser) btnLoginText.innerText = 'Sign In to Dashboard';
   }
+}
+
+function showLoginMsg(kind, msg) {
+  loginErrorMessage.innerText = msg;
+  loginErrorBox.className = kind === 'ok' ? 'alert-box alert-success' : 'alert-box alert-danger';
+  loginErrorBox.style.display = 'flex';
+}
+function hideLoginMsg() {
+  loginErrorBox.style.display = 'none';
+  loginErrorBox.className = 'alert-box alert-danger';
 }
 
 function handleLogout() {
@@ -187,6 +249,9 @@ async function loadStats() {
 
     const stats = json.data;
     metricTotalRegs.innerText = stats.totalRegistrations;
+    if (metricTotalRevenue) {
+      metricTotalRevenue.innerText = '₹' + Number(stats.totalRevenue || 0).toLocaleString();
+    }
     metricUniqueStudents.innerText = stats.uniqueStudents;
     metricTotalEvents.innerText = stats.totalEvents;
 
@@ -254,7 +319,7 @@ async function loadRegistrations() {
 
     const json = await res.json();
     if (!json.success) {
-      registrationsTableBody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--accent-rose);padding:2rem;">Failed to fetch data: ${json.message}</td></tr>`;
+      registrationsTableBody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--accent-rose);padding:2rem;">Failed to fetch data: ${json.message}</td></tr>`;
       return;
     }
 
@@ -269,7 +334,7 @@ async function loadRegistrations() {
     if (records.length === 0) {
       registrationsTableBody.innerHTML = `
         <tr>
-          <td colspan="9" style="text-align: center; padding: 3rem 0; color: var(--text-secondary);">
+          <td colspan="10" style="text-align: center; padding: 3rem 0; color: var(--text-secondary);">
             No matching registrations found.
           </td>
         </tr>
@@ -279,6 +344,14 @@ async function loadRegistrations() {
 
     registrationsTableBody.innerHTML = records.map((r) => {
       const dateStr = new Date(r.created_at).toLocaleString();
+      const amountPaid = r.amount_paid !== undefined && r.amount_paid !== null ? r.amount_paid : 0;
+      const isPaid = amountPaid > 0;
+      let teamMembers = [];
+      try { teamMembers = JSON.parse(r.members || '[]'); } catch (e) { teamMembers = []; }
+      const teamSize = 1 + teamMembers.length;
+      const teamLine = (r.team_name || teamMembers.length)
+        ? `<div style="font-size:0.72rem;color:#fbbf24;margin-top:0.15rem;">👥 ${r.team_name || 'Team'} (${teamSize})${teamMembers.length ? ' — ' + teamMembers.map((m) => `${m.name} [${m.roll_number}]`).join(', ') : ''}</div>`
+        : '';
       return `
         <tr>
           <td><code style="background:var(--bg-secondary);padding:0.2rem 0.4rem;border-radius:4px;color:var(--accent-cyan);font-weight:700;">${r.id}</code></td>
@@ -286,12 +359,22 @@ async function loadRegistrations() {
             <div style="font-weight:600; color: #fff;">${r.event_name}</div>
             <div style="font-size:0.75rem; color:var(--text-muted);">${r.event_category}</div>
           </td>
-          <td style="font-weight:600;">${r.name}</td>
+          <td style="font-weight:600;">${r.name}${teamLine}</td>
           <td><span style="color:#fbbf24; font-family:monospace; font-weight:700;">${r.roll_number}</span></td>
           <td>${r.department} • <span style="color:var(--text-secondary);">${r.year}</span></td>
           <td>
             <div>📱 ${r.phone}</div>
             <div style="font-size:0.75rem; color:var(--text-secondary);">✉️ ${r.email}</div>
+          </td>
+          <td>
+            <div class="payment-tag ${isPaid ? 'payment-tag-paid' : 'payment-tag-free'}">
+              <span>${isPaid ? `₹${amountPaid}` : 'Free'}</span>
+              <span>•</span>
+              <span>${r.payment_method || 'UPI'}</span>
+            </div>
+            <div style="font-size:0.72rem; color:var(--text-muted); font-family:monospace; margin-top:0.2rem;" title="Transaction ID">
+              ${r.transaction_id ? r.transaction_id : 'N/A'}
+            </div>
           </td>
           <td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;" title="${r.college}">${r.college}</td>
           <td style="font-size: 0.78rem; color: var(--text-muted);">${dateStr}</td>
@@ -305,7 +388,7 @@ async function loadRegistrations() {
     }).join('');
   } catch (err) {
     console.error('Error loading registrations:', err);
-    registrationsTableBody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--accent-rose);padding:2rem;">Network error loading registrations.</td></tr>`;
+    registrationsTableBody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--accent-rose);padding:2rem;">Network error loading registrations.</td></tr>`;
   }
 }
 

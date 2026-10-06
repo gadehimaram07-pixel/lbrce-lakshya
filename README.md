@@ -72,8 +72,32 @@ npm run dev
 ```
 
 The portal will be live at:
-- **Student Registration Portal**: [http://localhost:3000](http://localhost:3000)
+- **Login (start here)**: [http://localhost:3000](http://localhost:3000) — email OTP login, required before anything else
+- **Student Registration Portal**: [http://localhost:3000/home](http://localhost:3000/home) — redirects to login if not signed in
 - **Organizer Admin Console**: [http://localhost:3000/admin](http://localhost:3000/admin)
+
+### 3. Configure Email + Payments (required for OTP & live checkout)
+
+Copy `.env.example` to `.env` and fill in:
+
+```bash
+# Email (Gmail example — create an App Password, not your login password)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=youremail@gmail.com
+SMTP_PASS=your_gmail_app_password
+MAIL_FROM=Lakshya 2026 <youremail@gmail.com>
+
+# Razorpay (TEST keys from https://dashboard.razorpay.com/app/keys)
+RAZORPAY_KEY_ID=rzp_test_xxxx
+RAZORPAY_KEY_SECRET=yyyy
+
+# Optional: require OTP second factor for admin login
+ADMIN_EMAIL=organizer@lbrce.ac.in
+```
+
+- Without SMTP, OTP login and mails fail with a clear error (OTPs are **never** shown on any webpage — email only).
+- Without Razorpay keys, the Online Payment tab runs in demo-simulation mode and UPI-QR + manual UTR keeps working.
 
 ---
 

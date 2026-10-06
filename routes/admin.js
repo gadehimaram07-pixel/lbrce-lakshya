@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const { runQuery, getOne, getAll } = require('../db');
 const { verifyAdminToken, JWT_SECRET } = require('../middleware/auth');
 
-// POST /api/admin/login - Authenticate admin and return JWT
+// POST /api/admin/login - Authenticate admin (password + optional email OTP step)
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -33,6 +33,31 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    // If ADMIN_EMAIL is configured, require OTP second factor sent to mail
+    const adminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+    const otpEnabled = Boolean(adminEmail) && process.env.ADMIN_OTP_ENABLED !== 'false';
+
+    if (otpEnabled) {
+      const otp = String(Math.floor(100000 + Math.random() * 900000));
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+      await runQuery(`UPDATE otps SET consumed = 1 WHERE email = ? AND purpose = 'admin' AND consumed = 0`, [adminEmail]);
+      await runQuery(`INSERT INTO otps (email, otp, purpose, expires_at) VALUES (?, ?, 'admin', ?)`, [adminEmail, otp, expiresAt]);
+      const { sendOtpMail } = require('../utils/mailer');
+      const mail = await sendOtpMail(adminEmail, otp, 'admin');
+      if (!mail.sent) {
+        return res.status(502).json({
+          success: false,
+          message: `Password is correct, but the OTP mail could not be delivered to ${adminEmail}. Check SMTP settings and try again.`
+        });
+      }
+      return res.json({
+        success: true,
+        otpRequired: true,
+        message: `Password verified. OTP sent to ${adminEmail} — check inbox and spam.`,
+        adminEmailMasked: adminEmail.replace(/(^.).*(@.*$)/, '$1***$2')
+      });
+    }
+
     // Sign JWT (valid for 24 hours)
     const token = jwt.sign(
       { id: admin.id, username: admin.username },
@@ -55,12 +80,49 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// POST /api/admin/verify-otp - Complete admin login with emailed OTP
+router.post('/verify-otp', async (req, res) => {
+  try {
+    const { username, otp } = req.body;
+    const adminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+    if (!username || !otp) {
+      return res.status(400).json({ success: false, message: 'Username and OTP are required.' });
+    }
+    const row = await getOne(
+      `SELECT * FROM otps WHERE email = ? AND purpose = 'admin' AND consumed = 0 ORDER BY id DESC LIMIT 1`,
+      [adminEmail]
+    );
+    if (!row) return res.status(400).json({ success: false, message: 'No OTP found. Please login again.' });
+    if (new Date(row.expires_at).getTime() < Date.now()) {
+      await runQuery(`UPDATE otps SET consumed = 1 WHERE id = ?`, [row.id]);
+      return res.status(400).json({ success: false, message: 'OTP expired. Please login again.' });
+    }
+    if (row.otp !== String(otp).trim()) {
+      await runQuery(`UPDATE otps SET attempts = attempts + 1 WHERE id = ?`, [row.id]);
+      return res.status(400).json({ success: false, message: 'Incorrect OTP.' });
+    }
+    await runQuery(`UPDATE otps SET consumed = 1 WHERE id = ?`, [row.id]);
+    const admin = await getOne('SELECT * FROM admins WHERE username = ?', [String(username).trim()]);
+    if (!admin) return res.status(401).json({ success: false, message: 'Invalid admin credentials.' });
+    const token = jwt.sign({ id: admin.id, username: admin.username }, JWT_SECRET, { expiresIn: '24h' });
+    res.json({ success: true, message: 'Admin authentication successful.', token, username: admin.username });
+  } catch (error) {
+    console.error('Error in admin verify-otp:', error);
+    res.status(500).json({ success: false, message: 'Server error during OTP verification.' });
+  }
+});
+
 // GET /api/admin/stats - High-level metrics for dashboard
 router.get('/stats', verifyAdminToken, async (req, res) => {
   try {
     const totalRegsRow = await getOne('SELECT COUNT(*) as total FROM registrations');
     const uniqueStudentsRow = await getOne('SELECT COUNT(DISTINCT roll_number) as unique_students FROM registrations');
     const totalEventsRow = await getOne('SELECT COUNT(*) as total_events FROM events');
+    const revenueRow = await getOne(`
+      SELECT COALESCE(SUM(amount_paid), 0) as total_revenue 
+      FROM registrations 
+      WHERE payment_status IN ('SUCCESS', 'PAID')
+    `);
 
     // Event-wise counts
     const eventStats = await getAll(`
@@ -103,6 +165,7 @@ router.get('/stats', verifyAdminToken, async (req, res) => {
         totalRegistrations: totalRegsRow.total || 0,
         uniqueStudents: uniqueStudentsRow.unique_students || 0,
         totalEvents: totalEventsRow.total_events || 0,
+        totalRevenue: revenueRow ? revenueRow.total_revenue : 0,
         eventStats,
         departmentStats,
         yearStats
@@ -143,9 +206,12 @@ router.get('/registrations', verifyAdminToken, async (req, res) => {
         r.email LIKE ? OR 
         r.phone LIKE ? OR 
         r.id LIKE ? OR
-        r.college LIKE ?
+        r.college LIKE ? OR
+        r.transaction_id LIKE ? OR
+        r.team_name LIKE ? OR
+        r.members LIKE ?
       )`);
-      params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
+      params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -214,6 +280,12 @@ router.get('/export', verifyAdminToken, async (req, res) => {
         r.college,
         r.department,
         r.year,
+        r.team_name,
+        r.members,
+        r.payment_status,
+        r.payment_method,
+        r.amount_paid,
+        r.transaction_id,
         r.created_at
       FROM registrations r
       JOIN events e ON r.event_id = e.id
@@ -240,12 +312,21 @@ router.get('/export', verifyAdminToken, async (req, res) => {
       'College',
       'Department',
       'Year of Study',
+      'Team Name',
+      'Team Size',
+      'Team Members (name|roll|email|phone)',
+      'Payment Status',
+      'Payment Method',
+      'Amount Paid (INR)',
+      'Transaction / UTR ID',
       'Registration Time'
     ];
 
     let csvContent = headers.join(',') + '\r\n';
 
     for (const r of rows) {
+      let teamMembers = [];
+      try { teamMembers = JSON.parse(r.members || '[]'); } catch (e) { teamMembers = []; }
       const line = [
         escapeCSV(r.pass_code),
         escapeCSV(r.event_name),
@@ -257,6 +338,13 @@ router.get('/export', verifyAdminToken, async (req, res) => {
         escapeCSV(r.college),
         escapeCSV(r.department),
         escapeCSV(r.year),
+        escapeCSV(r.team_name || ''),
+        escapeCSV(1 + teamMembers.length),
+        escapeCSV(teamMembers.map((m) => `${m.name}|${m.roll_number}|${m.email}|${m.phone}`).join('; ')),
+        escapeCSV(r.payment_status || 'SUCCESS'),
+        escapeCSV(r.payment_method || 'UPI'),
+        escapeCSV(r.amount_paid !== undefined ? r.amount_paid : 0),
+        escapeCSV(r.transaction_id || 'N/A'),
         escapeCSV(r.created_at)
       ].join(',');
       csvContent += line + '\r\n';
