@@ -96,10 +96,14 @@
       btn.disabled = true;
       document.getElementById('btnSendOtpText').textContent = 'Sending OTP…';
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
         const res = await fetch('/api/auth/request-otp', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, purpose: 'login' })
+          body: JSON.stringify({ email, purpose: 'login' }),
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
         const data = await res.json();
         if (!data.success) return showErr(data.message || 'Failed to send OTP.');
         showOk(data.message || `OTP sent to ${email}. Check inbox & spam.`);
@@ -109,7 +113,9 @@
         document.getElementById('loginStepEmail').style.display = 'none';
         document.getElementById('loginStepOtp').style.display = 'block';
         document.getElementById('loginOtp').focus();
-      } catch { showErr('Network error. Please try again.'); }
+      } catch (err) {
+        showErr(err.name === 'AbortError' ? 'OTP request timed out. Retrying fallback…' : 'Network error. Please try again.');
+      }
       finally {
         btn.disabled = false;
         document.getElementById('btnSendOtpText').textContent = 'Send OTP to My Email';
