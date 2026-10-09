@@ -1,7 +1,11 @@
 const nodemailer = require('nodemailer');
+const dns = require('dns');
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
 
 const SMTP_HOST = process.env.SMTP_HOST || '';
-const SMTP_PORT = Number(process.env.SMTP_PORT) || 587;
+const SMTP_PORT = Number(process.env.SMTP_PORT) || 465;
 const SMTP_USER = (process.env.SMTP_USER || '').trim();
 const SMTP_PASS = (process.env.SMTP_PASS || '').replace(/\s+/g, '');
 const MAIL_FROM = process.env.MAIL_FROM || process.env.SMTP_USER || 'Lakshya 2026 <no-reply@lbrce.ac.in>';
@@ -18,23 +22,20 @@ function getTransporter() {
   if (transporter) return transporter;
 
   const isGmail = SMTP_HOST.toLowerCase().includes('gmail') || SMTP_USER.toLowerCase().endsWith('@gmail.com');
-  const transportOpts = isGmail
-    ? {
-        service: 'gmail',
-        auth: { user: SMTP_USER, pass: SMTP_PASS },
-        connectionTimeout: 6000,
-        greetingTimeout: 6000,
-        socketTimeout: 6000
-      }
-    : {
-        host: SMTP_HOST || 'smtp.gmail.com',
-        port: SMTP_PORT,
-        secure: SMTP_PORT === 465,
-        auth: { user: SMTP_USER, pass: SMTP_PASS },
-        connectionTimeout: 6000,
-        greetingTimeout: 6000,
-        socketTimeout: 6000
-      };
+  const host = isGmail ? 'smtp.gmail.com' : (SMTP_HOST || 'smtp.gmail.com');
+  const port = SMTP_PORT === 587 ? 587 : 465;
+  const secure = port === 465;
+
+  const transportOpts = {
+    host,
+    port,
+    secure,
+    auth: { user: SMTP_USER, pass: SMTP_PASS },
+    family: 4, // CRUCIAL: Forces IPv4. Fixes Render ENETUNREACH on IPv6!
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000
+  };
 
   transporter = nodemailer.createTransport(transportOpts);
   return transporter;
@@ -51,7 +52,7 @@ async function sendMail({ to, subject, html, text }) {
   try {
     const sendPromise = getTransporter().sendMail({ from: MAIL_FROM, to, subject, html, text });
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('SMTP timeout after 7000ms')), 7000)
+      setTimeout(() => reject(new Error('SMTP timeout after 12000ms')), 12000)
     );
     const info = await Promise.race([sendPromise, timeoutPromise]);
     console.log(`Email sent to ${to}: ${info.messageId}`);
