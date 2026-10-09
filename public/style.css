@@ -792,34 +792,63 @@ body {
   background: var(--bg-card-hover);
 }
 
-/* Print Rules */
+/* Print Rules — force printer-friendly black-on-white pass */
 @media print {
-  body * {
-    visibility: hidden;
-  }
-  #ticketPrintArea, #ticketPrintArea * {
-    visibility: visible;
-  }
+  @page { margin: 12mm; }
+  body { background: #fff !important; background-image: none !important; }
+  body * { visibility: hidden; }
+  #ticketPrintArea, #ticketPrintArea * { visibility: visible; }
   #ticketPrintArea {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
-    color: #000;
+    color: #000 !important;
     background: #fff !important;
     border: 2px solid #000 !important;
+    box-shadow: none !important;
   }
+  #ticketPrintArea * {
+    color: #000 !important;
+    background: transparent !important;
+    border-color: #000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  #ticketPrintArea .ticket-verified-stamp {
+    background: #fff !important;
+    color: #000 !important;
+    border: 2px solid #000 !important;
+  }
+  #ticketPrintArea .ticket-qr-img {
+    background: #fff !important;
+    border: 1px solid #000 !important;
+  }
+  #ticketPrintArea .mail-notice,
+  #ticketPrintArea .ticket-payment-strip { border: 1px solid #000 !important; }
   .modal-overlay {
     background: transparent !important;
-    position: static;
+    backdrop-filter: none !important;
+    position: static !important;
+    display: block !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
   }
+  .modal-overlay:not(:has(#ticketPrintArea)) { display: none !important; }
   .modal-dialog {
     border: none !important;
     box-shadow: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    transform: none !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
-  .no-print {
-    display: none !important;
-  }
+  .modal-header, .modal-body { overflow: visible !important; max-height: none !important; }
+  .no-print { display: none !important; }
 }
 
 /* Registration Multi-Step Wizard */
