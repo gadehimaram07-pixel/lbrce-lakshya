@@ -15,6 +15,9 @@ const paymentsRouter = require('./routes/payments');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust reverse proxy headers from Render / Cloudflare
+app.set('trust proxy', 1);
+
 // Security Headers with relaxed CSP for CDN stylesheets/icons
 app.use(
   helmet({
@@ -33,6 +36,7 @@ const generalLimiter = rateLimit({
   max: Number(process.env.RATE_LIMIT_GENERAL_MAX) || 300,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: {
     success: false,
     message: 'Too many requests from this IP address, please try again in a few minutes.'
@@ -46,6 +50,7 @@ const registrationLimiter = rateLimit({
   max: Number(process.env.RATE_LIMIT_REGISTER_MAX) || 20,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: {
     success: false,
     message: 'You have made too many registration attempts. Please wait a few minutes before trying again.'
@@ -58,6 +63,7 @@ const loginLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: {
     success: false,
     message: 'Too many login attempts. Please try again after 15 minutes.'
@@ -70,6 +76,7 @@ const otpLimiter = rateLimit({
   max: Number(process.env.RATE_LIMIT_OTP_MAX) || 10,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: {
     success: false,
     message: 'Too many OTP requests. Please wait a few minutes.'
