@@ -41,10 +41,18 @@ router.post('/request-otp', async (req, res) => {
     }
 
     // Fallback: If SMTP is not configured or failed to deliver
-    console.log(`[AUTH-FALLBACK] OTP for ${email}: ${otp}`);
+    console.log(`[AUTH-FALLBACK] OTP for ${email}: ${otp}`, mail.error || 'SMTP not configured');
+    let fallbackMsg = `Email service not connected in Render. Use Demo OTP: ${otp}`;
+    if (mail.error) {
+      if (mail.error.includes('535') || mail.error.includes('Username and Password not accepted')) {
+        fallbackMsg = `Gmail rejected password (535 Bad Credentials). Use Demo OTP: ${otp}`;
+      } else {
+        fallbackMsg = `Email delivery error (${mail.error.slice(0, 60)}). Use Demo OTP: ${otp}`;
+      }
+    }
     return res.json({
       success: true,
-      message: `Email service offline. Use Demo OTP: ${otp}`,
+      message: fallbackMsg,
       debugOtp: otp,
       mailSent: false
     });
