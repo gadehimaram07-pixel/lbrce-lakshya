@@ -356,7 +356,11 @@ async function requestAuthOtp() {
     });
     const data = await res.json();
     if (!data.success) return showAuthMsg('error', data.message);
-    showAuthMsg('ok', `OTP sent to ${email}. Check your inbox and spam folder — valid for 5 minutes.`);
+    showAuthMsg('ok', data.message || `OTP sent to ${email}. Check your inbox and spam folder — valid for 5 minutes.`);
+    if (data.debugOtp) {
+      const otpInput = document.getElementById('authOtpInput');
+      if (otpInput) otpInput.value = data.debugOtp;
+    }
     document.getElementById('authStepEmail').style.display = 'none';
     document.getElementById('authStepOtp').style.display = 'block';
   } catch { showAuthMsg('error', 'Network error. Try again.'); }
@@ -406,8 +410,12 @@ async function requestRegOtp() {
     const data = await res.json();
     if (!data.success) return showRegError(data.message);
     document.getElementById('regOtpBox').style.display = 'flex';
-    document.getElementById('regOtpHint').textContent = `OTP sent to ${email}. Enter it below (valid 5 min, check spam too).`;
-    toast(`OTP sent to ${email}`, 'success');
+    document.getElementById('regOtpHint').textContent = data.message || `OTP sent to ${email}. Enter it below (valid 5 min, check spam too).`;
+    if (data.debugOtp) {
+      const regInput = document.getElementById('regOtpInput');
+      if (regInput) regInput.value = data.debugOtp;
+    }
+    toast(data.message || `OTP sent to ${email}`, 'success');
   } catch { showRegError('Failed to send OTP. Try again.'); }
   finally { btn.disabled = false; btn.textContent = 'Send OTP'; }
 }

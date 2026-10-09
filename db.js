@@ -9,7 +9,7 @@ const dbPath = path.resolve(__dirname, 'lakshya.db');
 const RICH_EVENT_META = {
   'hackathon-code': {
     team_min: 1, team_max: 1, team_size_label: 'Individual', featured: 1, accent_color: '#6366f1',
-    reg_deadline: 'March 18, 2026 - 11:59 PM',
+    reg_deadline: 'March 18, 2027 - 11:59 PM',
     prizes: JSON.stringify({ first: '₹10,000 + Certificate', second: '₹5,000', third: '₹2,500' }),
     rounds: JSON.stringify([
       { name: 'Round 1: Online Screening', description: 'Timed algorithmic puzzles on HackerRank-style platform.' },
@@ -20,7 +20,7 @@ const RICH_EVENT_META = {
   },
   'paper-tech-cse': {
     team_min: 1, team_max: 2, team_size_label: '1 - 2 Members', accent_color: '#06b6d4',
-    reg_deadline: 'March 18, 2026 - 11:59 PM',
+    reg_deadline: 'March 18, 2027 - 11:59 PM',
     prizes: JSON.stringify({ first: '₹5,000 + Certificate', second: '₹3,000', third: '₹1,500' }),
     rounds: JSON.stringify([
       { name: 'Round 1: Abstract Screening', description: 'Submit 250-word abstract; shortlisted teams present onsite.' },
@@ -31,7 +31,7 @@ const RICH_EVENT_META = {
   },
   'paper-tech-ece': {
     team_min: 1, team_max: 2, team_size_label: '1 - 2 Members', accent_color: '#ec4899',
-    reg_deadline: 'March 18, 2026 - 11:59 PM',
+    reg_deadline: 'March 18, 2027 - 11:59 PM',
     prizes: JSON.stringify({ first: '₹5,000 + Certificate', second: '₹3,000', third: '₹1,500' }),
     rounds: JSON.stringify([
       { name: 'Round 1: Abstract Screening', description: 'Domain experts shortlist papers for finale.' },
@@ -42,7 +42,7 @@ const RICH_EVENT_META = {
   },
   'project-expo': {
     team_min: 1, team_max: 4, team_size_label: '1 - 4 Members', featured: 1, accent_color: '#10b981',
-    reg_deadline: 'March 18, 2026 - 11:59 PM',
+    reg_deadline: 'March 18, 2027 - 11:59 PM',
     prizes: JSON.stringify({ first: '₹12,000 + Trophy', second: '₹6,000', third: '₹3,000' }),
     rounds: JSON.stringify([
       { name: 'Round 1: Model Demonstration', description: 'Live working-model demo at your stall.' },
@@ -53,7 +53,7 @@ const RICH_EVENT_META = {
   },
   'robo-race': {
     team_min: 1, team_max: 3, team_size_label: '1 - 3 Members', featured: 1, accent_color: '#f59e0b',
-    reg_deadline: 'March 18, 2026 - 11:59 PM',
+    reg_deadline: 'March 18, 2027 - 11:59 PM',
     prizes: JSON.stringify({ first: '₹12,000 + Trophy', second: '₹6,000', third: '₹2,500' }),
     rounds: JSON.stringify([
       { name: 'Round 1: Arena Time Trial', description: 'Timed run across hurdles, bridge and slope sections.' },
@@ -64,7 +64,7 @@ const RICH_EVENT_META = {
   },
   'circuit-mania': {
     team_min: 1, team_max: 2, team_size_label: '1 - 2 Members', accent_color: '#a855f7',
-    reg_deadline: 'March 18, 2026 - 11:59 PM',
+    reg_deadline: 'March 18, 2027 - 11:59 PM',
     prizes: JSON.stringify({ first: '₹5,000 + Certificate', second: '₹3,000', third: '₹1,500' }),
     rounds: JSON.stringify([
       { name: 'Round 1: Fault Hunt', description: 'Find planted faults on populated PCBs against the clock.' },
@@ -75,7 +75,7 @@ const RICH_EVENT_META = {
   },
   'web-craft': {
     team_min: 1, team_max: 2, team_size_label: '1 - 2 Members', accent_color: '#06b6d4',
-    reg_deadline: 'March 19, 2026 - 11:59 PM',
+    reg_deadline: 'March 19, 2027 - 11:59 PM',
     prizes: JSON.stringify({ first: '₹6,000 + Certificate', second: '₹3,000', third: '₹1,500' }),
     rounds: JSON.stringify([
       { name: 'Sprint: 90-min Build', description: 'Design + code a landing page on the secret theme.' },
@@ -86,7 +86,7 @@ const RICH_EVENT_META = {
   },
   'cad-clash': {
     team_min: 1, team_max: 1, team_size_label: 'Individual', accent_color: '#f43f5e',
-    reg_deadline: 'March 18, 2026 - 11:59 PM',
+    reg_deadline: 'March 18, 2027 - 11:59 PM',
     prizes: JSON.stringify({ first: '₹5,000 + Certificate', second: '₹3,000', third: '₹1,500' }),
     rounds: JSON.stringify([
       { name: 'Round 1: 2D to 3D Sprint', description: 'Model a solid part from orthographic drawings.' },
@@ -97,7 +97,7 @@ const RICH_EVENT_META = {
   },
   'lan-gaming': {
     team_min: 1, team_max: 4, team_size_label: 'Squad (1 - 4)', featured: 1, accent_color: '#ec4899',
-    reg_deadline: 'March 19, 2026 - 11:59 PM',
+    reg_deadline: 'March 19, 2027 - 11:59 PM',
     prizes: JSON.stringify({ first: '₹8,000 + Trophy', second: '₹4,000', third: '₹2,000' }),
     rounds: JSON.stringify([
       { name: 'Round 1: Qualifiers', description: 'Group-stage matches across BGMI + Valorant brackets.' },

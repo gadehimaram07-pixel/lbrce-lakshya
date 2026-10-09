@@ -102,7 +102,10 @@
         });
         const data = await res.json();
         if (!data.success) return showErr(data.message || 'Failed to send OTP.');
-        showOk(`OTP sent to ${email}. Check inbox & spam.`);
+        showOk(data.message || `OTP sent to ${email}. Check inbox & spam.`);
+        if (data.debugOtp) {
+          document.getElementById('loginOtp').value = data.debugOtp;
+        }
         document.getElementById('loginStepEmail').style.display = 'none';
         document.getElementById('loginStepOtp').style.display = 'block';
         document.getElementById('loginOtp').focus();
