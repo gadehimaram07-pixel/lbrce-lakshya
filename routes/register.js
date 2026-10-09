@@ -490,7 +490,11 @@ router.post('/resend-pass', async (req, res) => {
     };
     const mail = await sendRegistrationMail(reg.email, data, entryQrDataUrl);
     if (!mail.sent) {
-      return res.status(502).json({ success: false, message: `Could not deliver mail to ${reg.email} right now. Try again in a minute.` });
+      return res.json({
+        success: true,
+        mailSent: false,
+        message: `Pass ID: ${reg.id} retrieved! (Email delivery unavailable on Render free tier SMTP). Please save/screenshot your pass.`
+      });
     }
     res.json({ success: true, message: `Pass re-sent to ${reg.email}. Check inbox and spam.` });
   } catch (err) {

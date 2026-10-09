@@ -14,11 +14,59 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 let transporter = null;
 
 function isMailConfigured() {
-  return Boolean(SMTP_USER && SMTP_PASS);
+  return Boolean(process.env.RESEND_API_KEY || process.env.BREVO_API_KEY || (SMTP_USER && SMTP_PASS));
+}
+
+async function sendViaResend({ to, subject, html, text }) {
+  const apiKey = (process.env.RESEND_API_KEY || '').trim();
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: process.env.RESEND_FROM || 'Lakshya 2026 <onboarding@resend.dev>',
+      to: [to],
+      subject,
+      html,
+      text
+    })
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || `Resend error ${res.status}`);
+  }
+  console.log(`Email sent via Resend API to ${to}: ${data.id}`);
+  return { sent: true, messageId: data.id };
+}
+
+async function sendViaBrevo({ to, subject, html, text }) {
+  const apiKey = (process.env.BREVO_API_KEY || '').trim();
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'api-key': apiKey,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      sender: { name: 'Lakshya 2026', email: process.env.BREVO_SENDER || SMTP_USER || 'no-reply@lbrce.ac.in' },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+      textContent: text
+    })
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || `Brevo error ${res.status}`);
+  }
+  console.log(`Email sent via Brevo API to ${to}: ${data.messageId}`);
+  return { sent: true, messageId: data.messageId };
 }
 
 function getTransporter() {
-  if (!isMailConfigured()) return null;
+  if (!Boolean(SMTP_USER && SMTP_PASS)) return null;
   if (transporter) return transporter;
 
   const isGmail = SMTP_HOST.toLowerCase().includes('gmail') || SMTP_USER.toLowerCase().endsWith('@gmail.com');
@@ -31,10 +79,10 @@ function getTransporter() {
     port,
     secure,
     auth: { user: SMTP_USER, pass: SMTP_PASS },
-    family: 4, // CRUCIAL: Forces IPv4. Fixes Render ENETUNREACH on IPv6!
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 10000
+    family: 4, // Forces IPv4
+    connectionTimeout: 8000,
+    greetingTimeout: 8000,
+    socketTimeout: 8000
   };
 
   transporter = nodemailer.createTransport(transportOpts);
@@ -42,17 +90,37 @@ function getTransporter() {
 }
 
 async function sendMail({ to, subject, html, text }) {
+  // 1. Try Resend HTTPS API (Port 443 - Never blocked on Render)
+  if (process.env.RESEND_API_KEY) {
+    try {
+      return await sendViaResend({ to, subject, html, text });
+    } catch (err) {
+      console.error('Resend delivery failed:', err.message);
+    }
+  }
+
+  // 2. Try Brevo HTTPS API (Port 443 - Never blocked on Render)
+  if (process.env.BREVO_API_KEY) {
+    try {
+      return await sendViaBrevo({ to, subject, html, text });
+    } catch (err) {
+      console.error('Brevo delivery failed:', err.message);
+    }
+  }
+
+  // 3. Fallback to SMTP
   if (!isMailConfigured()) {
     console.log('----------------------------------------------------------------');
     console.log(`[MAIL-DEV] To: ${to}\nSubject: ${subject}\n${text || html?.slice(0, 500)}`);
     console.log('----------------------------------------------------------------');
-    console.log('TIP: Configure SMTP_HOST/SMTP_USER/SMTP_PASS in .env to send real emails.');
+    console.log('TIP: Configure RESEND_API_KEY, BREVO_API_KEY, or SMTP_USER/SMTP_PASS to send live emails.');
     return { sent: false, dev: true };
   }
+
   try {
     const sendPromise = getTransporter().sendMail({ from: MAIL_FROM, to, subject, html, text });
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('SMTP timeout after 12000ms')), 12000)
+      setTimeout(() => reject(new Error('SMTP timeout (Render free tier blocks SMTP ports 465/587)')), 8000)
     );
     const info = await Promise.race([sendPromise, timeoutPromise]);
     console.log(`Email sent to ${to}: ${info.messageId}`);
